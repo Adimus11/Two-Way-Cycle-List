@@ -147,7 +147,7 @@ int getElementPosition(struct CycleList *l, int element){
     struct Node *temp = l->start;
     int iterator = 0;
 
-    while(temp != NULL){
+    while(iterator < l->size){
         if(temp->value == element){
             return iterator;
         }
@@ -155,6 +155,7 @@ int getElementPosition(struct CycleList *l, int element){
         iterator++;
     }
 
+    printf("Such element does not exists...\n");
     return -1;
 }
 
@@ -165,13 +166,13 @@ void printListNormal(struct CycleList *l){
 
     int iterator = 0;
 
-    while(iterator < l->size){
+    while(iterator < (l->size - 1)){
         printf("%d, ", temp->value);
         temp = temp->next;
         iterator++;
     }
 
-    printf(" ]\n");
+    printf("%d ]\n", temp->value);
 }
 
 void printListReverse(struct CycleList *l){
@@ -181,13 +182,13 @@ void printListReverse(struct CycleList *l){
 
     int iterator = 0;
 
-    while(iterator < l->size){
+    while(iterator < (l->size-1)){
         printf("%d, ", temp->value);
         temp = temp->prev;
         iterator++;
     }
 
-    printf(" ]\n");
+    printf("%d ]\n", temp->value);
 }
 
 struct CycleList *megre(struct CycleList *a, struct CycleList *b){
@@ -236,6 +237,11 @@ int main(){
     printf("Element: %d\n", getElementAt(list, 34));
     printf("Element: %d\n", getElementAt(list, 3));
 
+    printf("Get element index test\n");
+    printf("Index: %d\n", getElementPosition(list, 723));
+    printf("Index: %d\n", getElementPosition(list, 235));
+    printf("Index: %d\n", getElementPosition(list, 15));
+
     printf("Removal test\n");
     removeElementAt(list, 0);
     printListNormal(list);
@@ -267,11 +273,12 @@ int main(){
     double start, end;
     int selected;
 
-    selected = getElementAt(bigList, 512);
     struct timeval  tv1, tv2;
 
     gettimeofday(&tv1, NULL);
-    selected = getElementAt(bigList, 512);
+    for(i = 0; i < 1000; i++){
+        selected = getElementAt(bigList, 512);
+    }
     gettimeofday(&tv2, NULL);
 
     printf ("Selecting the same element lasts %f seconds\n",
@@ -279,7 +286,9 @@ int main(){
             (double) (tv2.tv_sec - tv1.tv_sec));
 
     gettimeofday(&tv1, NULL);
-    selected = getElementAt(bigList, rand()%1000);
+    for(i = 0; i < 1000; i++){
+        selected = getElementAt(bigList, rand()%1000);
+    }
     gettimeofday(&tv2, NULL);
 
     printf ("Selecting random element lasts %f seconds\n",
