@@ -4,149 +4,249 @@
 #include <sys/time.h>
 
 struct CycleList{
-    int value;
-    struct CycleList *prev;
-    struct CycleList *next;
+    int size;
+    struct Node *start;
 };
 
-struct CycleList *newList(int value){
+struct Node{
+    int value;
+    struct Node *prev;
+    struct Node *next;
+};
+
+struct CycleList *newList(){
     struct CycleList *list = malloc(sizeof(struct CycleList));
 
-    list->value = value;
-    list->next = list;
-    list->prev = list;
+    list->size = 0;
+    list->start = NULL;
 
     return list;
 }
 
 void addToList(struct CycleList *l, int value){
-    if(l == NULL){
-        printf("List not initialized or empty, pleas first use newList()...\n");
+    if(l->size == 0){
+        struct Node *temp = malloc(sizeof(struct Node));
+
+        temp->prev = temp;
+        temp->next = temp;
+        temp->value = value;
+
+        l->start = temp;
+        l->size++;
+
         return ;
     }
 
-    struct CycleList *new = malloc(sizeof(struct CycleList));
+    struct Node *new = malloc(sizeof(struct Node));
     new->value = value;
-    new->next = l;
-    new->prev = l->prev;
+    new->next = l->start;
+    new->prev = l->start->prev;
 
-    l->prev->next = new;
-    l->prev = new;
+    l->start->prev->next = new;
+    l->start->prev = new;
+    l->size++;
 }
 
-void removeElementAt(struct CycleList **l, int position){
-    struct CycleList *begin = *l;
-    struct CycleList *temp = *l;
-    int iterator = 0;
-    if(*l == NULL){
-        printf("List is already empty...\n");
+void removeElementAt(struct CycleList *l, int position){
+    if(position >= l->size){
+        printf("Such element does not exists...\n");
         return ;
     }
 
-    if(begin->next == begin->prev){
-        free(*l);
-        *l = NULL;
-        return ;
-    }
+    int iterator;
 
-    while(iterator < position){
-        iterator++;
-        temp = temp->next;
-    }
+    if(position == 0){
+        struct Node *temp = l->start;
+        struct Node *help = l->start->next;
+        l->size--;
 
+        
+        temp->prev->next = temp->next;
+        temp->next->prev = temp->prev;
+        l->start = temp->next;
 
-    if(temp == begin){
-        temp = (*l)->next;
-        temp->prev = temp->prev->prev;
-        temp->prev->next = temp;
-
-        free(*l);
-        *l = temp;
+        free(temp);
 
         return ;
     }
 
-    temp->prev->next = temp->next;
-    temp->next->prev = temp->prev;
+    if(position < (l->size/2)){
+        //This side of list is faster
+        iterator = 0;
+        struct Node *temp = l->start;
 
-    free(temp);
+        while(iterator != position){
+            iterator++;
+            temp = temp->next;
+        }
+
+        l->size--;
+        temp->prev->next = temp->next;
+        temp->next->prev = temp->prev;
+
+        free(temp);
+
+    }
+    else{
+        //This time, this side of list is faster xD
+        iterator = l->size - 1;
+        struct Node *temp = l->start->prev;
+
+        while(iterator != position){
+            iterator--;
+            temp = temp->prev;
+        }
+
+        l->size--;
+        temp->prev->next = temp->next;
+        temp->next->prev = temp->prev;
+
+        free(temp);
+
+    }
 }
 
 int getElementAt(struct CycleList *l, int position){
+    int iterator;
+    struct Node *temp;
+
+    if(position >= l->size){
+        printf("There is no such a element, returning 0...\n");
+        return 0;
+    }
+
+    if(position < (l->size/2)){
+        iterator = 0;
+        temp = l->start;
+
+        while(iterator != position){
+            iterator++;
+            temp = temp->next;
+        }
+    }
+    else{
+        iterator = l->size - 1;
+        temp = l->start->prev;
+
+        while(iterator != position){
+            iterator--;
+            temp = temp->prev;
+        }
+
+    }
+
+    return temp->value;
+}
+
+int getElementPosition(struct CycleList *l, int element){
+    if(l->size == 0){
+        printf("List is empty...\n");
+        return -1;
+    }
+
+    struct Node *temp = l->start;
     int iterator = 0;
 
-    while(iterator < position){
-        l = l->next;
+    while(temp != NULL){
+        if(temp->value == element){
+            return iterator;
+        }
+        temp = temp->next;
         iterator++;
     }
 
-    return l->value;
+    return -1;
 }
 
 void printListNormal(struct CycleList *l){
-    struct CycleList *first = l;
+    struct Node *temp = l->start;
 
     printf("[ ");
 
-    while(l->next != first){
-        printf("%d, ", l->value);
-        l = l->next;
+    int iterator = 0;
+
+    while(iterator < l->size){
+        printf("%d, ", temp->value);
+        temp = temp->next;
+        iterator++;
     }
 
-    printf("%d ]\n", l->value);
+    printf(" ]\n");
 }
 
 void printListReverse(struct CycleList *l){
-    l = l->prev;
-    struct CycleList *last = l;
+    struct Node *temp = l->start->prev;
 
     printf("[ ");
 
-    while(l->prev != last){
-        printf("%d, ", l->value);
-        l = l->prev;
+    int iterator = 0;
+
+    while(iterator < l->size){
+        printf("%d, ", temp->value);
+        temp = temp->prev;
+        iterator++;
     }
 
-    printf("%d ]\n", l->value);
+    printf(" ]\n");
 }
 
-struct CycleList *megre(struct CycleList **a, struct CycleList **b){
-    struct CycleList *new = *a;
-    (*a)->prev->next = (*b);
-    (*b)->prev->next = (*a);
+struct CycleList *megre(struct CycleList *a, struct CycleList *b){
+    struct CycleList *new = newList();
 
-    (*a) = NULL;
-    (*b) = NULL;
+    struct Node *temp = a->start;
+    int iterator = 0;
 
+    while(iterator < a->size){
+        addToList(new, temp->value);
+        temp = temp->next;
+        iterator++;
+    }
+
+    temp = b->start;
+    iterator = 0;
+
+    while(iterator < b->size){
+        addToList(new, temp->value);
+        temp = temp->next;
+        iterator++;
+    }
+    
+    
     return new;
 }
 
 int main(){
     srand(time(NULL));
 
-    struct CycleList *list = newList(25);
+    struct CycleList *list = newList();
+
+    printf("Add test\n");
     addToList(list, 723);
     addToList(list, 123);
     addToList(list, 223);
     addToList(list, 235);
     addToList(list, 623);
 
+    printf("Print test\n");
     printListNormal(list);
     printListReverse(list);
+
+    printf("Get element at t test\n");
     printf("Element: %d\n", getElementAt(list, 0));
     printf("Element: %d\n", getElementAt(list, 34));
     printf("Element: %d\n", getElementAt(list, 3));
 
-    removeElementAt(&list, 0);
+    printf("Removal test\n");
+    removeElementAt(list, 0);
     printListNormal(list);
 
-    removeElementAt(&list, 3);
+    removeElementAt(list, 3);
     printListNormal(list);
 
-    removeElementAt(&list, 15);
+    removeElementAt(list, 15);
     printListNormal(list);
 
-    struct CycleList *list2 = newList(1);
+    struct CycleList *list2 = newList();
     addToList(list2, 2);
     addToList(list2, 3);
     addToList(list2, 4);
@@ -155,12 +255,12 @@ int main(){
 
     printListNormal(list2);
 
-    struct CycleList *listMerged = megre(&list, &list2);
+    struct CycleList *listMerged = megre(list, list2);
     printListNormal(listMerged);
 
-    struct CycleList *bigList = newList(rand()%1001);
+    struct CycleList *bigList = newList();
     int i;
-    for(i = 0; i < 999; i++){
+    for(i = 0; i < 1000; i++){
         addToList(bigList, rand()%1001);
     }
 
